@@ -68,11 +68,8 @@ async def twilio_webhook(
             f"Confirmed! Booking #{booking_id} at {booking['restaurant_name']} "
             f"on {booking['date']} at {booking['time']} for {booking['party_size']}."
         )
-        settings = get_twilio_settings()
-        user_phone = settings.get("user_phone_number", "")
-        if user_phone:
-            await asyncio.to_thread(send_sms, user_phone, reply)
         return _twiml_response(reply)
+
 
     elif action == "NO":
         with get_db() as db:
