@@ -83,52 +83,7 @@ def _ensure_tables(conn: sqlite3.Connection):
 
 
 def init_db():
-    conn = get_db()
-    conn.executescript("""
-        CREATE TABLE IF NOT EXISTS settings (
-            key TEXT PRIMARY KEY,
-            value TEXT
-        );
-        CREATE TABLE IF NOT EXISTS monitors (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            restaurant_name TEXT NOT NULL,
-            opentable_id TEXT NOT NULL,
-            days_of_week TEXT NOT NULL DEFAULT '[]',
-            time_start TEXT NOT NULL DEFAULT '17:00',
-            time_end TEXT NOT NULL DEFAULT '21:00',
-            party_size INTEGER NOT NULL DEFAULT 2,
-            weeks_ahead INTEGER NOT NULL DEFAULT 4,
-            active INTEGER NOT NULL DEFAULT 1,
-            created_at TEXT NOT NULL DEFAULT (datetime('now'))
-        );
-        CREATE TABLE IF NOT EXISTS alerts (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            monitor_id INTEGER,
-            restaurant_name TEXT NOT NULL,
-            date TEXT NOT NULL,
-            time TEXT NOT NULL,
-            party_size INTEGER NOT NULL,
-            status TEXT NOT NULL DEFAULT 'notified',
-            booking_token TEXT,
-            created_at TEXT NOT NULL DEFAULT (datetime('now')),
-            FOREIGN KEY (monitor_id) REFERENCES monitors(id)
-        );
-    """)
-    defaults = {
-        "app_password": "tablesnipe",
-        "twilio_sid": "",
-        "twilio_token": "",
-        "twilio_phone": "",
-        "user_phone": "",
-        "openai_key": "",
-    }
-    for key, value in defaults.items():
-        conn.execute(
-            "INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)",
-            (key, value),
-        )
-    conn.commit()
-    conn.close()
+    get_db().close()
 
 
 def get_setting(key: str) -> str:
