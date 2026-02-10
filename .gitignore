@@ -1,2 +1,7 @@
-node_modules/\ndist/\n*.db\n__pycache__/\n.env\n*.pyc\n.cache/
+node_modules/
+dist/
+*.db
 __pycache__/
+.env
+*.pyc
+.cache/
