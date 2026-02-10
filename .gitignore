@@ -1,0 +1,3 @@
+node_modules/\ndist/\n.env\n__pycache__/\n*.pyc\n.cache/\npoetry.lock\n*.egg-info/\n.venv/
+__pycache__/
+*.pyc
