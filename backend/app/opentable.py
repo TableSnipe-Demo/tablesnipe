@@ -199,13 +199,11 @@ def get_upcoming_dates(day_of_week: str, weeks_ahead: int) -> list[str]:
 
     today = datetime.now()
     dates = []
+    days_ahead = (target_day - today.weekday()) % 7
+    if days_ahead == 0 and today.hour >= 22:
+        days_ahead = 7
     for week in range(weeks_ahead):
-        days_ahead = (target_day - today.weekday()) % 7
-        if days_ahead == 0 and week == 0:
-            if today.hour >= 22:
-                days_ahead = 7
         target_date = today + timedelta(days=days_ahead + (7 * week))
-        if target_date.date() >= today.date():
-            dates.append(target_date.strftime("%Y-%m-%d"))
+        dates.append(target_date.strftime("%Y-%m-%d"))
 
-    return list(dict.fromkeys(dates))
+    return dates

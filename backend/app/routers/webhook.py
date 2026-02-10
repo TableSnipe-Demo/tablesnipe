@@ -1,6 +1,8 @@
 import logging
-from fastapi import APIRouter, Form
+from fastapi import APIRouter, Form, Request, HTTPException
 from fastapi.responses import Response
+from xml.sax.saxutils import escape
+from twilio.request_validator import RequestValidator
 from app.database import get_db
 from app.sms import send_sms, get_twilio_settings
 
@@ -11,9 +13,20 @@ router = APIRouter(prefix="/api/twilio", tags=["twilio"])
 
 @router.post("/webhook")
 async def twilio_webhook(
+    request: Request,
     Body: str = Form(""),
     From: str = Form(""),
 ):
+    settings = get_twilio_settings()
+    auth_token = settings.get("twilio_auth_token", "")
+    if auth_token:
+        validator = RequestValidator(auth_token)
+        signature = request.headers.get("X-Twilio-Signature", "")
+        form_data = dict(await request.form())
+        url = str(request.url)
+        if not validator.validate(url, form_data, signature):
+            raise HTTPException(status_code=403, detail="Invalid Twilio signature")
+
     body = Body.strip().upper()
     logger.info(f"Received SMS from {From}: {body}")
 
@@ -76,6 +89,6 @@ async def twilio_webhook(
 def _twiml_response(message: str) -> Response:
     twiml = f"""<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-    <Message>{message}</Message>
+    <Message>{escape(message)}</Message>
 </Response>"""
     return Response(content=twiml, media_type="application/xml")

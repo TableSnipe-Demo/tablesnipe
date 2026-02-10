@@ -28,7 +28,7 @@ const DAYS = [
   "Sunday",
 ];
 
-const TIMES = Array.from({ length: 28 }, (_, i) => {
+const TIMES = Array.from({ length: 26 }, (_, i) => {
   const hour = Math.floor(i / 2) + 11;
   const min = i % 2 === 0 ? "00" : "30";
   const displayHour = hour > 12 ? hour - 12 : hour;

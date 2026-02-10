@@ -68,8 +68,9 @@ async def check_monitors():
                     )
                     booking_id = cursor.lastrowid
 
-                send_availability_notification(
-                    booking_id, restaurant_name, date, display_time, party_size
+                await asyncio.to_thread(
+                    send_availability_notification,
+                    booking_id, restaurant_name, date, display_time, party_size,
                 )
                 logger.info(
                     f"Notified: {restaurant_name} on {date} at {display_time}"
