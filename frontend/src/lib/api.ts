@@ -40,6 +40,7 @@ export interface Settings {
   twilio_auth_token: string;
   twilio_phone_number: string;
   user_phone_number: string;
+  opentable_api_key: string;
 }
 
 export interface Restaurant {
@@ -88,4 +89,9 @@ export const api = {
     }),
   searchRestaurants: (query: string) =>
     request<Restaurant[]>(`/api/restaurants/search?query=${encodeURIComponent(query)}`),
+  verifyPassword: (password: string) =>
+    request<{ authenticated: boolean }>("/api/auth/verify", {
+      method: "POST",
+      body: JSON.stringify({ password }),
+    }),
 };

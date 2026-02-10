@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import init_db
 from app.scheduler import start_scheduler, stop_scheduler
-from app.routers import monitors, bookings, settings, restaurants, webhook
+from app.routers import monitors, bookings, settings, restaurants, webhook, auth
 
 logging.basicConfig(level=logging.INFO)
 
@@ -31,6 +31,7 @@ app.include_router(bookings.router)
 app.include_router(settings.router)
 app.include_router(restaurants.router)
 app.include_router(webhook.router)
+app.include_router(auth.router)
 
 @app.get("/healthz")
 async def healthz():

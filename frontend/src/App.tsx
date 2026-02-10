@@ -6,9 +6,13 @@ import { MonitorForm } from "@/components/MonitorForm";
 import { MonitorList } from "@/components/MonitorList";
 import { BookingList } from "@/components/BookingList";
 import { SettingsForm } from "@/components/SettingsForm";
+import { LoginGate } from "@/components/LoginGate";
 import { Plus, Crosshair, Loader2 } from "lucide-react";
 
 function App() {
+  const [authenticated, setAuthenticated] = useState(
+    () => sessionStorage.getItem("ts_auth") === "true"
+  );
   const [monitors, setMonitors] = useState<Monitor[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
@@ -34,6 +38,10 @@ function App() {
     const interval = setInterval(loadData, 30000);
     return () => clearInterval(interval);
   }, [loadData]);
+
+  if (!authenticated) {
+    return <LoginGate onAuthenticated={() => setAuthenticated(true)} />;
+  }
 
   return (
     <div className="min-h-screen bg-zinc-50">

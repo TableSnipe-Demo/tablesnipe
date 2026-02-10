@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from "react";
-import { api, Restaurant, MonitorCreate } from "@/lib/api";
+import { useState } from "react";
+import { api, MonitorCreate } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,7 +16,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Search, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 const DAYS = [
   "Monday",
@@ -39,6 +39,21 @@ const TIMES = Array.from({ length: 28 }, (_, i) => {
   };
 });
 
+function extractRestaurantId(urlOrId: string): string {
+  const trimmed = urlOrId.trim();
+  try {
+    const url = new URL(trimmed);
+    const parts = url.pathname.split("/").filter(Boolean);
+    const rIndex = parts.indexOf("r");
+    if (rIndex !== -1 && rIndex + 1 < parts.length) {
+      return parts[rIndex + 1];
+    }
+    return parts[parts.length - 1] || trimmed;
+  } catch {
+    return trimmed;
+  }
+}
+
 interface MonitorFormProps {
   open: boolean;
   onClose: () => void;
@@ -46,53 +61,21 @@ interface MonitorFormProps {
 }
 
 export function MonitorForm({ open, onClose, onCreated }: MonitorFormProps) {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<Restaurant[]>([]);
-  const [searching, setSearching] = useState(false);
-  const [selectedRestaurant, setSelectedRestaurant] =
-    useState<Restaurant | null>(null);
+  const [restaurantName, setRestaurantName] = useState("");
+  const [restaurantUrl, setRestaurantUrl] = useState("");
   const [dayOfWeek, setDayOfWeek] = useState("Friday");
   const [timeOfDay, setTimeOfDay] = useState("19:00");
   const [partySize, setPartySize] = useState("2");
   const [weeksAhead, setWeeksAhead] = useState("4");
   const [submitting, setSubmitting] = useState(false);
-  const [showResults, setShowResults] = useState(false);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    if (searchQuery.length < 2) {
-      setSearchResults([]);
-      setShowResults(false);
-      return;
-    }
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(async () => {
-      setSearching(true);
-      try {
-        const results = await api.searchRestaurants(searchQuery);
-        setSearchResults(results);
-        setShowResults(true);
-      } catch {
-        setSearchResults([]);
-      } finally {
-        setSearching(false);
-      }
-    }, 400);
-  }, [searchQuery]);
-
-  const handleSelectRestaurant = (r: Restaurant) => {
-    setSelectedRestaurant(r);
-    setSearchQuery(r.name);
-    setShowResults(false);
-  };
 
   const handleSubmit = async () => {
-    if (!selectedRestaurant) return;
+    if (!restaurantName.trim() || !restaurantUrl.trim()) return;
     setSubmitting(true);
     try {
       const data: MonitorCreate = {
-        restaurant_name: selectedRestaurant.name,
-        restaurant_id: selectedRestaurant.id,
+        restaurant_name: restaurantName.trim(),
+        restaurant_id: extractRestaurantId(restaurantUrl),
         day_of_week: dayOfWeek.toLowerCase(),
         time_of_day: timeOfDay,
         party_size: parseInt(partySize),
@@ -110,15 +93,15 @@ export function MonitorForm({ open, onClose, onCreated }: MonitorFormProps) {
   };
 
   const resetForm = () => {
-    setSearchQuery("");
-    setSelectedRestaurant(null);
+    setRestaurantName("");
+    setRestaurantUrl("");
     setDayOfWeek("Friday");
     setTimeOfDay("19:00");
     setPartySize("2");
     setWeeksAhead("4");
-    setSearchResults([]);
-    setShowResults(false);
   };
+
+  const isValid = restaurantName.trim().length > 0 && restaurantUrl.trim().length > 0;
 
   return (
     <Dialog
@@ -136,55 +119,24 @@ export function MonitorForm({ open, onClose, onCreated }: MonitorFormProps) {
         </DialogHeader>
         <div className="space-y-4 pt-2">
           <div className="space-y-2">
-            <Label>Restaurant</Label>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
-              <Input
-                placeholder="Search OpenTable restaurants..."
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  setSelectedRestaurant(null);
-                }}
-                className="pl-9"
-              />
-              {searching && (
-                <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-zinc-400" />
-              )}
-            </div>
-            {showResults && searchResults.length > 0 && (
-              <div className="border rounded-md max-h-48 overflow-y-auto bg-white shadow-lg">
-                {searchResults.map((r) => (
-                  <button
-                    key={r.id}
-                    onClick={() => handleSelectRestaurant(r)}
-                    className="w-full text-left px-3 py-2 hover:bg-zinc-100 border-b last:border-0 transition-colors"
-                  >
-                    <div className="font-medium text-sm">{r.name}</div>
-                    <div className="text-xs text-zinc-500">
-                      {r.cuisine && `${r.cuisine} · `}
-                      {r.locality}
-                      {r.region && `, ${r.region}`}
-                      {r.price_range && ` · ${r.price_range}`}
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
-            {showResults && searchResults.length === 0 && !searching && (
-              <p className="text-sm text-zinc-500">No restaurants found</p>
-            )}
-            {selectedRestaurant && (
-              <div className="bg-zinc-50 rounded-md p-3 border">
-                <div className="font-medium text-sm">
-                  {selectedRestaurant.name}
-                </div>
-                <div className="text-xs text-zinc-500">
-                  {selectedRestaurant.address},{" "}
-                  {selectedRestaurant.locality}
-                </div>
-              </div>
-            )}
+            <Label>Restaurant Name</Label>
+            <Input
+              placeholder="e.g. Carbone"
+              value={restaurantName}
+              onChange={(e) => setRestaurantName(e.target.value)}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>OpenTable URL or Restaurant ID</Label>
+            <Input
+              placeholder="e.g. https://www.opentable.com/r/carbone-new-york"
+              value={restaurantUrl}
+              onChange={(e) => setRestaurantUrl(e.target.value)}
+            />
+            <p className="text-xs text-zinc-500">
+              Paste the full OpenTable restaurant link or just the restaurant slug/ID
+            </p>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -265,7 +217,7 @@ export function MonitorForm({ open, onClose, onCreated }: MonitorFormProps) {
             </Button>
             <Button
               onClick={handleSubmit}
-              disabled={!selectedRestaurant || submitting}
+              disabled={!isValid || submitting}
             >
               {submitting ? (
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />

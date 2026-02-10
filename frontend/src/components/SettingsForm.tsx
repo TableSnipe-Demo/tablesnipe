@@ -12,6 +12,7 @@ export function SettingsForm() {
     twilio_auth_token: "",
     twilio_phone_number: "",
     user_phone_number: "",
+    opentable_api_key: "",
   });
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -97,6 +98,26 @@ export function SettingsForm() {
                 })
               }
               placeholder="+1234567890"
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">OpenTable</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2">
+            <Label htmlFor="ot-key">API Key</Label>
+            <Input
+              id="ot-key"
+              type="password"
+              value={settings.opentable_api_key}
+              onChange={(e) =>
+                setSettings({ ...settings, opentable_api_key: e.target.value })
+              }
+              placeholder="Your OpenTable API key"
             />
           </div>
         </CardContent>

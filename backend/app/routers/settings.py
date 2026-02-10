@@ -15,6 +15,7 @@ async def get_settings():
         twilio_auth_token=settings_dict.get("twilio_auth_token", ""),
         twilio_phone_number=settings_dict.get("twilio_phone_number", ""),
         user_phone_number=settings_dict.get("user_phone_number", ""),
+        opentable_api_key=settings_dict.get("opentable_api_key", ""),
     )
 
 
@@ -33,4 +34,5 @@ async def update_settings(settings: SettingsUpdate):
         twilio_auth_token=settings_dict.get("twilio_auth_token", ""),
         twilio_phone_number=settings_dict.get("twilio_phone_number", ""),
         user_phone_number=settings_dict.get("user_phone_number", ""),
+        opentable_api_key=settings_dict.get("opentable_api_key", ""),
     )

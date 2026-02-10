@@ -52,6 +52,7 @@ class SettingsUpdate(BaseModel):
     twilio_auth_token: Optional[str] = None
     twilio_phone_number: Optional[str] = None
     user_phone_number: Optional[str] = None
+    opentable_api_key: Optional[str] = None
 
 
 class SettingsResponse(BaseModel):
@@ -59,6 +60,7 @@ class SettingsResponse(BaseModel):
     twilio_auth_token: str = ""
     twilio_phone_number: str = ""
     user_phone_number: str = ""
+    opentable_api_key: str = ""
 
 
 class RestaurantSearchResult(BaseModel):
@@ -70,3 +72,7 @@ class RestaurantSearchResult(BaseModel):
     price_range: str
     cuisine: str
     image_url: str = ""
+
+
+class PasswordVerify(BaseModel):
+    password: str
