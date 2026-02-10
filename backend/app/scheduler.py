@@ -27,7 +27,7 @@ async def check_monitors():
         party_size = monitor["party_size"]
         weeks_ahead = monitor["weeks_ahead"]
 
-        dates = get_upcoming_dates(day_of_week, weeks_ahead)
+        dates = get_upcoming_dates(day_of_week, weeks_ahead, time_of_day)
         logger.info(
             f"Checking {restaurant_name} for {len(dates)} upcoming {day_of_week}s"
         )

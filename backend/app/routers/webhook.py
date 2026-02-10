@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from fastapi import APIRouter, Form, Request, HTTPException
 from fastapi.responses import Response
@@ -70,7 +71,7 @@ async def twilio_webhook(
         settings = get_twilio_settings()
         user_phone = settings.get("user_phone_number", "")
         if user_phone:
-            send_sms(user_phone, reply)
+            await asyncio.to_thread(send_sms, user_phone, reply)
         return _twiml_response(reply)
 
     elif action == "NO":

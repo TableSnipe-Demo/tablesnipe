@@ -188,7 +188,7 @@ async def check_availability(
         return []
 
 
-def get_upcoming_dates(day_of_week: str, weeks_ahead: int) -> list[str]:
+def get_upcoming_dates(day_of_week: str, weeks_ahead: int, time_of_day: str = "") -> list[str]:
     day_map = {
         "monday": 0, "tuesday": 1, "wednesday": 2, "thursday": 3,
         "friday": 4, "saturday": 5, "sunday": 6,
@@ -200,8 +200,18 @@ def get_upcoming_dates(day_of_week: str, weeks_ahead: int) -> list[str]:
     today = datetime.now()
     dates = []
     days_ahead = (target_day - today.weekday()) % 7
-    if days_ahead == 0 and today.hour >= 22:
-        days_ahead = 7
+    if days_ahead == 0:
+        skip_today = False
+        if time_of_day:
+            try:
+                target_hour = int(time_of_day.split(":")[0])
+                skip_today = today.hour >= target_hour
+            except (ValueError, IndexError):
+                skip_today = today.hour >= 22
+        else:
+            skip_today = today.hour >= 22
+        if skip_today:
+            days_ahead = 7
     for week in range(weeks_ahead):
         target_date = today + timedelta(days=days_ahead + (7 * week))
         dates.append(target_date.strftime("%Y-%m-%d"))
