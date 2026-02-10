@@ -1,6 +1,8 @@
+import logging
 import httpx
 from datetime import datetime, timedelta
-from typing import Optional
+
+logger = logging.getLogger(__name__)
 
 BASE_URL = "https://www.opentable.com"
 GRAPHQL_URL = f"{BASE_URL}/dapi/fe/gql"
@@ -90,7 +92,7 @@ async def search_restaurants(query: str, limit: int = 10) -> list[dict]:
                     })
                 return results
 
-            resp_text = resp.text[:200]
+            logger.warning(f"GraphQL search failed with status {resp.status_code}: {resp.text[:200]}")
             url = f"{BASE_URL}/dapi/restaurants/search"
             resp2 = await client.get(
                 url,
@@ -114,7 +116,8 @@ async def search_restaurants(query: str, limit: int = 10) -> list[dict]:
                     for r in restaurants
                 ]
             return []
-    except Exception:
+    except Exception as e:
+        logger.error(f"Restaurant search error: {e}")
         return []
 
 
@@ -180,7 +183,8 @@ async def check_availability(
                     if s.get("isAvailable", True)
                 ]
             return []
-    except Exception:
+    except Exception as e:
+        logger.error(f"Availability check error: {e}")
         return []
 
 
