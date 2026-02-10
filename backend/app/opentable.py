@@ -180,7 +180,8 @@ async def check_availability(
                         "is_available": True,
                     }
                     for s in timeslots
-                    if s.get("isAvailable", True)
+                    if s.get("isAvailable", False)
+
                 ]
             return []
     except Exception as e:
