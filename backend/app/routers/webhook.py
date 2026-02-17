@@ -1,3 +1,4 @@
+import asyncio
 import datetime
 import logging
 import re
@@ -58,7 +59,7 @@ async def twilio_webhook(
         await db.commit()
 
         if settings and monitor:
-            _send_reply(
+            await _send_reply(
                 settings,
                 f"Got it! Skipping {monitor.restaurant_name} at {notification.slot_datetime}.",
             )
@@ -100,7 +101,7 @@ async def twilio_webhook(
         notification.responded_at = datetime.datetime.utcnow()
         await db.commit()
 
-        _send_reply(
+        await _send_reply(
             settings,
             f"Booked! {monitor.restaurant_name} at {notification.slot_datetime} "
             f"for {monitor.party_size}. Check OpenTable for details.",
@@ -113,7 +114,7 @@ async def twilio_webhook(
         notification.responded_at = datetime.datetime.utcnow()
         await db.commit()
 
-        _send_reply(
+        await _send_reply(
             settings,
             f"Booking failed for {monitor.restaurant_name}: {e}. "
             "The slot may no longer be available.",
@@ -121,7 +122,7 @@ async def twilio_webhook(
         return f"Booking failed: {e}"
 
 
-def _send_reply(settings: Settings, message: str):
+async def _send_reply(settings: Settings, message: str):
     if (
         settings.twilio_account_sid
         and settings.twilio_auth_token
@@ -129,7 +130,8 @@ def _send_reply(settings: Settings, message: str):
         and settings.user_phone_number
     ):
         try:
-            send_sms(
+            await asyncio.to_thread(
+                send_sms,
                 account_sid=settings.twilio_account_sid,
                 auth_token=settings.twilio_auth_token,
                 from_number=settings.twilio_phone_number,

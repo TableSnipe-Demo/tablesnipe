@@ -22,6 +22,10 @@ async def poll_all_monitors():
             logger.warning("No OpenTable auth token configured, skipping poll")
             return
 
+        if not settings.polling_enabled:
+            logger.info("Polling is disabled, skipping poll")
+            return
+
         monitors_result = await db.execute(
             select(Monitor).where(Monitor.active == True)
         )
@@ -113,7 +117,8 @@ async def poll_single_monitor(
                         party_size=monitor.party_size,
                         notification_id=notification.id,
                     )
-                    sid = send_sms(
+                    sid = await asyncio.to_thread(
+                        send_sms,
                         account_sid=settings.twilio_account_sid,
                         auth_token=settings.twilio_auth_token,
                         from_number=settings.twilio_phone_number,

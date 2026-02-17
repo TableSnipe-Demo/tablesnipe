@@ -9,7 +9,7 @@ from sqlalchemy import select
 
 from app.database import init_db, async_session
 from app.models import Settings
-from app.scheduler import run_poll, poll_all_monitors
+from app.scheduler import run_poll
 from app.routers import settings, monitors, notifications, webhook, restaurants
 
 logging.basicConfig(level=logging.INFO)
@@ -62,5 +62,6 @@ async def healthz():
 
 @app.post("/api/poll/trigger")
 async def trigger_poll():
-    asyncio.ensure_future(poll_all_monitors())
+    loop = asyncio.get_event_loop()
+    loop.run_in_executor(None, run_poll)
     return {"status": "poll triggered"}
