@@ -1,0 +1,7 @@
+tablesnipe.db
+*.db
+.env
+node_modules/
+dist/
+__pycache__/
+.venv/
