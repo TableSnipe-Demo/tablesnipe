@@ -1,4 +1,4 @@
-import os
+import asyncio
 from twilio.rest import Client
 from typing import Optional
 
@@ -14,26 +14,37 @@ def get_twilio_client(account_sid: str, auth_token: str) -> Optional[Client]:
         return None
 
 
-def send_sms(
+def _send_sms_sync(
+    client: Client,
+    from_number: str,
+    to_number: str,
+    body: str,
+) -> str:
+    """Synchronous SMS send (run in thread pool to avoid blocking)."""
+    message = client.messages.create(
+        body=body,
+        from_=from_number,
+        to=to_number,
+    )
+    return message.sid
+
+
+async def send_sms(
     account_sid: str,
     auth_token: str,
     from_number: str,
     to_number: str,
     body: str,
 ) -> Optional[str]:
-    """Send an SMS message. Returns the message SID or None on failure."""
+    """Send an SMS message asynchronously. Returns the message SID or None on failure."""
     client = get_twilio_client(account_sid, auth_token)
     if not client:
         print("Twilio client not configured")
         return None
 
     try:
-        message = client.messages.create(
-            body=body,
-            from_=from_number,
-            to=to_number,
-        )
-        return message.sid
+        sid = await asyncio.to_thread(_send_sms_sync, client, from_number, to_number, body)
+        return sid
     except Exception as e:
         print(f"Error sending SMS: {e}")
         return None

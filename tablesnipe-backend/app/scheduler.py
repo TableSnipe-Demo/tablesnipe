@@ -99,7 +99,7 @@ async def poll_all_monitors():
                                 party_size=party_size,
                                 notification_id=notification_id,
                             )
-                            sms_sid = send_sms(
+                            sms_sid = await send_sms(
                                 account_sid=twilio_sid,
                                 auth_token=twilio_token,
                                 from_number=twilio_from,

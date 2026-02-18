@@ -166,6 +166,7 @@ async def get_settings():
         if settings.get("twilio_auth_token"):
             token = settings["twilio_auth_token"]
             settings["twilio_auth_token_masked"] = token[:4] + "****" + token[-4:] if len(token) > 8 else "****"
+            del settings["twilio_auth_token"]
         else:
             settings["twilio_auth_token_masked"] = ""
         return {"settings": settings}
@@ -202,6 +203,7 @@ async def update_settings(updates: SettingsUpdate):
         if settings.get("twilio_auth_token"):
             token = settings["twilio_auth_token"]
             settings["twilio_auth_token_masked"] = token[:4] + "****" + token[-4:] if len(token) > 8 else "****"
+            del settings["twilio_auth_token"]
         else:
             settings["twilio_auth_token_masked"] = ""
         return {"settings": settings}
@@ -276,8 +278,8 @@ async def twilio_webhook(
             twilio_token = settings.get("twilio_auth_token", "")
             twilio_from = settings.get("twilio_phone_number", "")
             if twilio_sid and twilio_token and twilio_from:
-                send_sms(twilio_sid, twilio_token, twilio_from, from_number,
-                         "No pending reservations to respond to.")
+                await send_sms(twilio_sid, twilio_token, twilio_from, from_number,
+                               "No pending reservations to respond to.")
             return {"status": "no_pending"}
 
         notif = dict(notification)
@@ -295,7 +297,7 @@ async def twilio_webhook(
             twilio_token = settings.get("twilio_auth_token", "")
             twilio_from = settings.get("twilio_phone_number", "")
             if twilio_sid and twilio_token and twilio_from:
-                send_sms(
+                await send_sms(
                     twilio_sid, twilio_token, twilio_from, from_number,
                     f"Reservation confirmed! {notif['restaurant_name']} at {notif['slot_datetime']}. "
                     f"Please complete your booking on OpenTable."
@@ -315,7 +317,7 @@ async def twilio_webhook(
             twilio_token = settings.get("twilio_auth_token", "")
             twilio_from = settings.get("twilio_phone_number", "")
             if twilio_sid and twilio_token and twilio_from:
-                send_sms(
+                await send_sms(
                     twilio_sid, twilio_token, twilio_from, from_number,
                     f"Reservation skipped for {notif['restaurant_name']}. Will keep monitoring!"
                 )
@@ -328,7 +330,7 @@ async def twilio_webhook(
             twilio_token = settings.get("twilio_auth_token", "")
             twilio_from = settings.get("twilio_phone_number", "")
             if twilio_sid and twilio_token and twilio_from:
-                send_sms(
+                await send_sms(
                     twilio_sid, twilio_token, twilio_from, from_number,
                     "Reply YES to book or NO to skip the reservation."
                 )
