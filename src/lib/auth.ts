@@ -1,5 +1,11 @@
+import { timingSafeEqual } from "crypto";
 import { getSetting } from "./db";
 import { NextRequest, NextResponse } from "next/server";
+
+function safeCompare(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  return timingSafeEqual(Buffer.from(a), Buffer.from(b));
+}
 
 export function verifyAuth(request: NextRequest): boolean {
   const appSecret = getSetting("app_secret");
@@ -12,12 +18,12 @@ export function verifyAuth(request: NextRequest): boolean {
   const authHeader = request.headers.get("authorization");
   if (authHeader) {
     const token = authHeader.replace("Bearer ", "");
-    if (token === appSecret) return true;
+    if (safeCompare(token, appSecret)) return true;
   }
 
   // Check cookie
   const cookieToken = request.cookies.get("tablesnipe_token")?.value;
-  if (cookieToken === appSecret) return true;
+  if (cookieToken && safeCompare(cookieToken, appSecret)) return true;
 
   return false;
 }

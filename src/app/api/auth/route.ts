@@ -1,5 +1,11 @@
+import { timingSafeEqual } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { getSetting, setSetting } from "@/lib/db";
+
+function safeCompare(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  return timingSafeEqual(Buffer.from(a), Buffer.from(b));
+}
 
 export async function POST(request: NextRequest) {
   const body = await request.json();
@@ -26,7 +32,7 @@ export async function POST(request: NextRequest) {
   }
 
   // Verify secret
-  if (secret !== appSecret) {
+  if (!safeCompare(secret, appSecret)) {
     return NextResponse.json({ error: "Invalid secret" }, { status: 401 });
   }
 

@@ -67,7 +67,7 @@ async function pollMonitor(
 
       // Filter slots within the target time range
       const matchingSlots = slots.filter((slot) => {
-        const slotTime = slot.dateTime.split("T")[1];
+        const slotTime = slot.dateTime.split("T")[1]?.slice(0, 5) ?? "";
         return slotTime >= targetTimeStart && slotTime <= targetTimeEnd;
       });
 

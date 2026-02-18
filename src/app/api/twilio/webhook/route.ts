@@ -6,13 +6,27 @@ import {
   getSetting,
 } from "@/lib/db";
 import { lockReservation, completeReservation } from "@/lib/opentable";
-import { sendSMS } from "@/lib/twilio";
+import { sendSMS, validateTwilioRequest } from "@/lib/twilio";
 
 export async function POST(request: NextRequest) {
   // Parse the incoming Twilio webhook (form-encoded)
   const formData = await request.formData();
   const body = formData.get("Body")?.toString().trim() ?? "";
   const from = formData.get("From")?.toString() ?? "";
+
+  // Validate Twilio request signature
+  const twilioSignature = request.headers.get("x-twilio-signature") ?? "";
+  const webhookUrl = getSetting("webhook_url") ?? request.url;
+  const params: Record<string, string> = {};
+  formData.forEach((value, key) => {
+    params[key] = value.toString();
+  });
+
+  const authToken = getSetting("twilio_auth_token");
+  if (authToken && !validateTwilioRequest(webhookUrl, params, twilioSignature)) {
+    console.log(`[Twilio Webhook] Invalid signature, rejecting request`);
+    return new NextResponse("Forbidden", { status: 403 });
+  }
 
   console.log(`[Twilio Webhook] From: ${from}, Body: "${body}"`);
 
