@@ -12,17 +12,21 @@ import {
 } from "@/components/ui/select";
 import { searchRestaurants, createMonitor, DAY_NAMES } from "../api";
 import type { Restaurant } from "../api";
-import { Search, Plus } from "lucide-react";
+import { Search, Plus, PenLine } from "lucide-react";
 
 interface MonitorFormProps {
   onCreated: () => void;
 }
 
 export default function MonitorForm({ onCreated }: MonitorFormProps) {
+  const [mode, setMode] = useState<"search" | "manual">("search");
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Restaurant[]>([]);
   const [searching, setSearching] = useState(false);
+  const [searchError, setSearchError] = useState(false);
   const [selected, setSelected] = useState<Restaurant | null>(null);
+  const [manualName, setManualName] = useState("");
+  const [manualId, setManualId] = useState("");
   const [partySize, setPartySize] = useState(2);
   const [targetTime, setTargetTime] = useState("19:00");
   const [daysOfWeek, setDaysOfWeek] = useState<number[]>([5, 6]);
@@ -32,17 +36,21 @@ export default function MonitorForm({ onCreated }: MonitorFormProps) {
   const doSearch = useCallback(async () => {
     if (query.length < 2) return;
     setSearching(true);
+    setSearchError(false);
     try {
       const res = await searchRestaurants(query);
       setResults(res);
+      if (res.length === 0) setSearchError(true);
     } catch {
       setResults([]);
+      setSearchError(true);
     } finally {
       setSearching(false);
     }
   }, [query]);
 
   useEffect(() => {
+    setSearchError(false);
     const timeout = setTimeout(() => {
       if (query.length >= 2) doSearch();
     }, 400);
@@ -55,13 +63,21 @@ export default function MonitorForm({ onCreated }: MonitorFormProps) {
     );
   };
 
+  const canSubmit = () => {
+    if (daysOfWeek.length === 0) return false;
+    if (mode === "search") return selected !== null;
+    return manualName.trim().length > 0 && manualId.trim().length > 0;
+  };
+
   const handleSubmit = async () => {
-    if (!selected || daysOfWeek.length === 0) return;
+    if (!canSubmit()) return;
     setSubmitting(true);
+    const restaurantName = mode === "search" ? selected!.name : manualName.trim();
+    const restaurantId = mode === "search" ? selected!.id : manualId.trim();
     try {
       await createMonitor({
-        restaurant_name: selected.name,
-        restaurant_id: selected.id,
+        restaurant_name: restaurantName,
+        restaurant_id: restaurantId,
         party_size: partySize,
         target_time: targetTime,
         days_of_week: daysOfWeek,
@@ -70,6 +86,8 @@ export default function MonitorForm({ onCreated }: MonitorFormProps) {
       setSelected(null);
       setQuery("");
       setResults([]);
+      setManualName("");
+      setManualId("");
       setDaysOfWeek([5, 6]);
       onCreated();
     } catch (err) {
@@ -82,13 +100,34 @@ export default function MonitorForm({ onCreated }: MonitorFormProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Plus className="h-5 w-5" />
-          Add Monitor
+        <CardTitle className="flex items-center justify-between">
+          <span className="flex items-center gap-2">
+            <Plus className="h-5 w-5" />
+            Add Monitor
+          </span>
+          <div className="flex gap-1">
+            <Button
+              variant={mode === "search" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setMode("search")}
+            >
+              <Search className="h-3.5 w-3.5 mr-1" />
+              Search
+            </Button>
+            <Button
+              variant={mode === "manual" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setMode("manual")}
+            >
+              <PenLine className="h-3.5 w-3.5 mr-1" />
+              Manual
+            </Button>
+          </div>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Restaurant Search */}
+        {/* Restaurant Selection */}
+        {mode === "search" ? (
         <div className="space-y-2">
           <Label>Restaurant</Label>
           {selected ? (
@@ -147,9 +186,44 @@ export default function MonitorForm({ onCreated }: MonitorFormProps) {
                   ))}
                 </div>
               )}
+              {searchError && !searching && query.length >= 2 && (
+                <p className="text-sm text-muted-foreground">
+                  No results found. Try the{" "}
+                  <button
+                    className="text-primary underline"
+                    onClick={() => setMode("manual")}
+                  >
+                    manual entry
+                  </button>{" "}
+                  mode instead.
+                </p>
+              )}
             </div>
           )}
         </div>
+        ) : (
+        <div className="space-y-3">
+          <div className="space-y-1.5">
+            <Label>Restaurant Name</Label>
+            <Input
+              placeholder="e.g. Nobu Malibu"
+              value={manualName}
+              onChange={(e) => setManualName(e.target.value)}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label>OpenTable Restaurant ID</Label>
+            <Input
+              placeholder="e.g. 123456"
+              value={manualId}
+              onChange={(e) => setManualId(e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground">
+              Find the ID from the OpenTable URL: opentable.com/r/restaurant-name-<strong>12345</strong>
+            </p>
+          </div>
+        </div>
+        )}
 
         {/* Party Size & Time */}
         <div className="grid grid-cols-2 gap-4">
@@ -222,7 +296,7 @@ export default function MonitorForm({ onCreated }: MonitorFormProps) {
         <Button
           className="w-full"
           onClick={handleSubmit}
-          disabled={!selected || daysOfWeek.length === 0 || submitting}
+          disabled={!canSubmit() || submitting}
         >
           {submitting ? "Creating..." : "Add Monitor"}
         </Button>
