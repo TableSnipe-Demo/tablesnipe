@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
   const masked: Record<string, string> = {};
   for (const [key, value] of Object.entries(settings)) {
     if (SENSITIVE_KEYS.includes(key) && value) {
-      masked[key] = value.slice(0, 4) + "..." + value.slice(-4);
+      masked[key] = value.length > 8 ? value.slice(0, 4) + "..." + value.slice(-4) : "****";
     } else {
       masked[key] = value;
     }
@@ -41,11 +41,28 @@ export async function POST(request: NextRequest) {
     "webhook_url",
   ];
 
+  let newSecret: string | null = null;
   for (const [key, value] of Object.entries(body)) {
     if (allowedKeys.includes(key) && typeof value === "string" && value.trim()) {
       setSetting(key, value.trim());
+      if (key === "app_secret") {
+        newSecret = value.trim();
+      }
     }
   }
 
-  return NextResponse.json({ success: true });
+  const response = NextResponse.json({ success: true });
+
+  // If app_secret was changed, update the auth cookie so the user isn't locked out
+  if (newSecret) {
+    response.cookies.set("tablesnipe_token", newSecret, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 60 * 60 * 24 * 30,
+      path: "/",
+    });
+  }
+
+  return response;
 }

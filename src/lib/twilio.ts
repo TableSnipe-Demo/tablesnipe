@@ -37,7 +37,7 @@ export function formatAlertMessage(
   partySize: number,
   alertId: string
 ): string {
-  const formattedDate = new Date(date).toLocaleDateString("en-US", {
+  const formattedDate = new Date(date + "T00:00:00").toLocaleDateString("en-US", {
     weekday: "long",
     month: "long",
     day: "numeric",
