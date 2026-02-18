@@ -16,7 +16,8 @@ export async function POST(request: NextRequest) {
 
   // Validate Twilio request signature
   const twilioSignature = request.headers.get("x-twilio-signature") ?? "";
-  const webhookUrl = getSetting("webhook_url") ?? request.url;
+  const baseUrl = getSetting("webhook_url");
+  const webhookUrl = baseUrl ? `${baseUrl.replace(/\/$/, '')}/api/twilio/webhook` : request.url;
   const params: Record<string, string> = {};
   formData.forEach((value, key) => {
     params[key] = value.toString();
